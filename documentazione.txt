@@ -1,0 +1,208 @@
+# Documentazione per il progetto "fotogram" 
+* Studente: Fabrizio Canepa 
+* Matricola: 03280A 
+
+
+
+## Progettazione concettuale 
+Considerare il diagramma ER caricato in upload
+
+
+### Scelte progettuali
+
+- Accorpamento degli attributi contenuto e immagine nell’entità POST
+  come conseguenza della ristrutturazione della gerarchia.
+
+- Modellazione di LIKE e SEGNALAZIONE come entità
+  per rappresentare tali operazioni come risorse autonome del sistema.
+
+- Adozione di chiavi composte (id_utente, id_post)
+  per LIKE e SEGNALAZIONE
+  per riflettere il vincolo di unicità logico del dominio.
+
+- Esclusione del concetto di sessione dal modello
+  in quanto gestito a livello applicativo tramite JWT.
+
+
+### Vincoli aggiuntivi
+
+- Un post può contenere esclusivamente un messaggio testuale
+   oppure un’immagine, ma non entrambi.
+
+- Se tipo_post = 'TESTO', contenuto deve essere valorizzato
+   e immagine deve essere NULL.
+
+- Se tipo_post = 'FOTO', immagine deve essere valorizzata
+   e contenuto deve essere NULL.
+
+- Un utente non può seguire sé stesso.
+
+- Un utente può mettere al massimo un like per ciascun post.
+
+
+### Regole di derivazione / flusso
+
+- Il numero di like di un post è derivato
+  dal conteggio delle istanze di LIKE associate al post.
+
+- La bacheca di un utente mostra i post pubblicati
+  dall’utente stesso e dagli utenti seguiti,
+  ordinati per data di creazione decrescente.
+
+- La visualizzazione dei post è paginata
+  e mostra un numero limitato di post per volta.
+
+- L’operazione di like è reversibile:
+  se un utente ha già messo like a un post,
+  l’operazione successiva comporta la rimozione del like.
+
+- Alla creazione di una segnalazione
+  vengono memorizzate la data e l’ora di invio.
+
+
+
+
+## Progettazione logica (Ristrutturazione)
+
+Sono descritte le modifiche apportate al progetto
+nelle diverse fasi della ristrutturazione
+dello schema E-R.
+
+
+
+### Ridondanze
+
+- Non viene introdotta la ridondanza del numero di like su POST,
+  in quanto tale informazione è derivabile
+  dal conteggio delle istanze di LIKE associate al post.
+  La ridondanza ridurrebbe il numero di letture,
+  ma comporterebbe aggiornamenti aggiuntivi
+  a ogni operazione di like o unlike.
+
+- Non viene introdotta una ridondanza
+  sul numero di post pubblicati da un utente,
+  poiché tale informazione è derivabile
+  e non richiesta frequentemente
+  nelle operazioni principali del sistema.
+
+
+
+### Eliminazione delle gerarchie
+
+- La gerarchia POST–TESTO/FOTO viene eliminata
+  accorpando le entità figlie nell’entità POST,
+  poiché gli accessi ai dati del post e al suo contenuto
+  avvengono sempre contestualmente.
+
+  La generalizzazione è totale ed esclusiva
+  e non sono presenti associazioni
+  che coinvolgano esclusivamente le entità figlie.
+
+  Viene introdotto l’attributo discriminante tipo_post
+  e vengono accorpati gli attributi contenuto e immagine.
+
+- La gerarchia UTENTE–BASE/MODERATORE viene eliminata
+  accorpando le entità figlie nell’entità UTENTE,
+  poiché gli accessi ai dati dell’utente
+  e alle informazioni di moderazione
+  avvengono in modo contestuale.
+
+  Vengono introdotti gli attributi data_nomina,
+  is_amministratore e tipo_utente
+  per mantenere l’informazione precedentemente
+  rappresentata dalla gerarchia.
+
+
+
+### Scelte degli identificatori principali
+
+- Per UTENTE viene adottata una chiave artificiale id_utente
+  per evitare l’uso di chiavi naturali complesse
+  e semplificare le associazioni.
+
+- Per POST viene adottata una chiave artificiale id_post
+  per consentire un’identificazione univoca dei post
+  indipendente dal contenuto e dall’utente creatore.
+
+- Per LIKE e SEGNALAZIONE viene adottata
+  una chiave primaria composta (id_utente, id_post),
+  poiché un utente può effettuare
+  al massimo un like o una segnalazione
+  per ciascun post.
+
+- Per SEGUE viene adottata una chiave primaria composta
+  (id_follower, id_followed),
+  coerente con la natura ricorsiva della relazione
+  e con il vincolo di unicità del follow.
+
+
+PROGETTAZIONE LOGICA (MODELLO RELAZIONALE)
+
+Legenda:
+(PK) = chiave primaria
+(FK) = chiave esterna
+(UNIQUE) = vincolo di unicità
+(NULL) = attributo che ammette valore nullo
+(NOT NULL) = attributo che non ammette valore nullo
+
+
+UTENTE(
+    id_utente (PK),
+    username (UNIQUE, NOT NULL),
+    email (UNIQUE, NOT NULL),
+    password (NOT NULL),
+    immagine_profilo (NULL),
+    data_registrazione (NOT NULL),
+    data_nascita (NULL),
+    nome (NULL),
+    cognome (NULL),
+    data_nomina (NULL),
+    is_amministratore (NULL),
+    tipo_utente (NOT NULL)
+)
+
+
+POST(
+    id_post (PK),
+    id_utente (FK -> UTENTE.id_utente),
+    data_creazione (NOT NULL),
+    stato_moderazione (NOT NULL),
+    tipo_post (NOT NULL),
+    testo (NULL),
+    immagine (NULL)
+)
+
+
+SEGUE(
+    id_follower (PK, FK -> UTENTE.id_utente),
+    id_followed (PK, FK -> UTENTE.id_utente),
+    data_inizio (NOT NULL),
+    data_fine (NULL)
+)
+
+
+LIKE(
+    id_utente (PK, FK -> UTENTE.id_utente),
+    id_post (PK, FK -> POST.id_post),
+    data (NOT NULL)
+)
+
+
+SEGNALAZIONE(
+    id_utente (PK, FK -> UTENTE.id_utente),
+    id_post (PK, FK -> POST.id_post),
+    data (NOT NULL),
+    ora (NOT NULL)
+)
+
+
+VINCOLI LOGICI AGGIUNTIVI
+
+- Ogni POST è creato da un solo UTENTE
+- Un UTENTE può creare più POST
+- Un UTENTE può seguire molti UTENTI ed essere seguito da molti UTENTI
+- Un UTENTE non può seguire sé stesso
+- Un UTENTE può mettere al massimo un LIKE per ciascun POST
+- Un UTENTE può inviare più SEGNALAZIONI
+- Un POST può ricevere più LIKE e più SEGNALAZIONI
+- Il numero di like di un post è un attributo derivato
