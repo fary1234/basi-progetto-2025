@@ -10,9 +10,6 @@ Considerare il diagramma ER caricato in upload
 
 ### Scelte progettuali
 
-- Accorpamento degli attributi contenuto e immagine nell’entità POST
-  come conseguenza della ristrutturazione della gerarchia.
-
 - Modellazione di LIKE e SEGNALAZIONE come entità
   per rappresentare tali operazioni come risorse autonome del sistema.
 
@@ -22,6 +19,22 @@ Considerare il diagramma ER caricato in upload
 
 - Esclusione del concetto di sessione dal modello
   in quanto gestito a livello applicativo tramite JWT.
+
+- Utilizzo di ID numerici (id_utente): Per l'entità UTENTE, 
+  si è scelto di utilizzare un identificatore artificiale numerico (id_utente) come 
+  chiave primaria, preferendolo a identificatori naturali come username o email.
+
+  Semplicità di gestione: L'uso di un intero semplifica notevolmente le operazioni di JOIN
+   tra le tabelle e la gestione delle chiavi esterne (FK) in tutte le entità collegate 
+   (POST, SEGUE, LIKE, SEGNALAZIONE).
+
+  Efficienza di memoria: Un valore numerico occupa meno spazio su disco e
+   in memoria rispetto a stringhe di caratteri variabili (come email o username),
+   rendendo le operazioni di indicizzazione e ricerca molto più rapide.
+
+  Stabilità: Gli identificatori naturali (come l'email) possono cambiare
+   nel tempo; l'ID numerico rimane immutabile, garantendo l'integrità referenziale del database
+   a lungo termine.
 
 
 ### Vincoli aggiuntivi
