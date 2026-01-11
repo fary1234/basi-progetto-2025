@@ -397,3 +397,98 @@ Responses:
 * 401, token non valido
 * 409, segnalazione già presente
 * 500, errore di database o business logic
+
+
+### Endpoint /segnalazioni
+
+#### GET
+Recupero post segnalati (moderatore)
+
+Headers:
+* bearer (string)
+
+QUERIES:
+SELECT DISTINCT p.id_post,
+       u.username AS autore,
+       p.tipo_post,
+       p.contenuto,
+       p.immagine
+FROM SEGNALAZIONE s
+JOIN POST p ON s.id_post = p.id_post
+JOIN UTENTE u ON p.id_utente = u.id_utente;
+
+Responses:
+* 200, lista post segnalati
+* 401, token non valido
+* 403, utente non autorizzato
+* 500, errore di database o business logic
+
+
+### Endpoint /segnalazioni/{id_post}
+
+#### DELETE
+Rimozione segnalazione (moderatore)
+
+Headers:
+* bearer (string)
+
+QUERIES:
+DELETE FROM SEGNALAZIONE
+WHERE id_post = $1;
+
+Responses:
+* 200, segnalazione rimossa
+* 401, token non valido
+* 403, utente non autorizzato
+* 404, segnalazione non esistente
+* 500, errore di database o business logic
+
+
+### Endpoint /admin/nomina-moderatore
+
+#### PATCH
+Nomina utente come moderatore
+
+Headers:
+* bearer (string)
+
+Request body:
+{
+  "id_utente": 1
+}
+
+QUERIES:
+UPDATE UTENTE
+SET tipo_utente = 'MODERATORE',
+    data_nomina = CURRENT_DATE
+WHERE id_utente = $1;
+
+Responses:
+* 200, utente nominato moderatore
+* 401, token non valido
+* 403, utente non amministratore
+* 404, utente non esistente
+* 500, errore di database o business logic
+
+
+### Endpoint /profilo/foto
+
+#### POST
+Caricamento immagine profilo
+
+Headers:
+* bearer (string)
+
+Parameters:
+* immagine (multipart/form-data)
+
+QUERIES:
+UPDATE UTENTE
+SET immagine_profilo = $1
+WHERE id_utente = $2;
+
+Responses:
+* 200, immagine caricata
+* 400, parametro mancante
+* 401, token non valido
+* 500, errore di database o business logic
