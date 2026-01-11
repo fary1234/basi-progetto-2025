@@ -219,3 +219,181 @@ VINCOLI LOGICI AGGIUNTIVI
 - Un UTENTE può inviare più SEGNALAZIONI
 - Un POST può ricevere più LIKE e più SEGNALAZIONI
 - Il numero di like di un post è un attributo derivato
+
+
+## Progettazione API e query corrispondenti 
+
+Utenti inseriti: 
+* 1:  Mario Rossi
+* 2:  Luigi Bianchi
+* 3:  Sara Toscano
+* 5:  Nino Frassica
+* 6:  Checco Zalone
+
+### Endpoint /register
+ 
+#### POST 
+Registrazione utente
+
+Request body:
+
+{
+  "username": "string",
+  "email": "string",
+  "password": "string",
+  "nome": "string",
+  "cognome": "string"
+}
+
+QUERIES:
+
+INSERT INTO UTENTE (
+  username, email, password, nome, cognome,
+  data_registrazione, tipo_utente, is_amministratore
+)
+VALUES ($1, $2, $3, $4, $5, CURRENT_DATE, 'BASE', false)
+RETURNING id_utente;
+
+Responses:
+
+*200, restituisce id_utente
+*400, parametri mancanti o non validi
+*500, errore di database o business logic
+
+
+
+### Endpoint /login
+
+#### POST 
+Autenticazione utente 
+
+Request body:
+{
+  "username": "string",
+  "password": "string"
+}
+
+QUERIES:
+SELECT id_utente, password, tipo_utente
+FROM UTENTE
+WHERE username = $1;
+
+Responses:
+* 200, restituisce token JWT
+* 400, parametri mancanti o non validi
+* 401, credenziali errate
+* 500, errore di database o business logic
+
+
+
+### Endpoint /posts
+
+#### POST
+Inserimento nuovo post (testo o immagine)
+
+Headers:
+* bearer (string)
+
+Request body:
+{
+  "tipo_post": "TESTO | FOTO",
+  "contenuto": "string",
+  "immagine": "string"
+}
+
+QUERIES:
+INSERT INTO POST (
+  id_utente,
+  data_creazione,
+  stato_moderazione,
+  tipo_post,
+  contenuto,
+  immagine
+)
+VALUES ($1, CURRENT_TIMESTAMP, 'APPROVATO', $2, $3, $4);
+RETURNING id_post;
+
+Responses:
+* 200, post inserito
+* 400, parametri mancanti o non validi
+* 401, Credenziali errate
+* 500, errore di database o business logic
+
+
+### Endpoint /feed
+
+#### GET
+Recupero bacheca utente
+
+Headers:
+* bearer (string)
+
+Parameters:
+* size (int)
+* page (int)
+
+QUERIES:
+
+SELECT p.id_post, u.username, u.immagine_profilo, 
+       p.tipo_post, p.contenuto, p.immagine, p.data_creazione
+FROM POST p
+JOIN UTENTE u ON p.id_utente = u.id_utente
+WHERE p.id_utente = $1 
+   OR EXISTS (
+       SELECT 1 FROM SEGUE 
+       WHERE id_follower = $1 AND id_followed = p.id_utente
+   )
+ORDER BY p.data_creazione DESC
+LIMIT $2 OFFSET $3;
+
+Responses:
+* 200, restituisce lista dei post
+* 401, token non valido
+* 500, errore di database o businewss logic
+
+
+### Endpoint /posts/{id}/like
+
+#### POST
+Inserimento o rimozione like
+
+Headers:
+* bearer (string)
+
+QUERIES:
+
+INSERT INTO LIKES (id_utente, id_post, data)
+VALUES ($1, $2, CURRENT_DATE)
+ON CONFLICT (id_utente, id_post)
+DO NOTHING;
+
+DELETE FROM LIKES
+WHERE id_utente = $1
+  AND id_post = $2;
+
+
+Responses:
+* 200, like aggiornato
+* 401, token non valido
+* 404, post non esistente
+* 500, errore di database o business logic
+
+
+
+### Endpoint /posts/{id}/segnalazione
+
+#### POST
+Segnalazione di un post
+
+Headers:
+* bearer (string)
+
+QUERIES:
+INSERT INTO SEGNALAZIONE (id_utente, id_post, data, ora)
+VALUES ($1, $2, CURRENT_DATE, CURRENT_TIME);
+
+Responses:
+* 200, segnalazione registrata
+* 401, token non valido
+* 409, segnalazione già presente
+* 500, errore di database o business logic
