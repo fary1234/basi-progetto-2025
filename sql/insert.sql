@@ -32,9 +32,9 @@ INSERT INTO POST (
     contenuto
 )
 VALUES
-(1, CURRENT_TIMESTAMP, 'APPROVATO', 'TESTO', 'Ciao a tutti, questo è il mio primo post!'),
-(2, CURRENT_TIMESTAMP, 'APPROVATO', 'TESTO', 'Buongiorno, che bella giornata oggi.'),
-(3, CURRENT_TIMESTAMP, 'APPROVATO', 'TESTO', 'Sto studiando basi di dati 😄');
+(1, CURRENT_TIMESTAMP, 'APPROVATO', 'TESTO', 'ciao, prova prova'),
+(2, CURRENT_TIMESTAMP, 'APPROVATO', 'TESTO', 'prova secondo post'),
+(3, CURRENT_TIMESTAMP, 'APPROVATO', 'TESTO', 'prova terzo post');
 
 -- Post FOTO
 
