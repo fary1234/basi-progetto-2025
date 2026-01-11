@@ -46,8 +46,9 @@ INSERT INTO POST (
     immagine
 )
 VALUES
-(4, CURRENT_TIMESTAMP, 'APPROVATO', 'FOTO', 'foto_nino.jpg'),
-(5, CURRENT_TIMESTAMP, 'APPROVATO', 'FOTO', 'foto_checco.jpg');
+(4, CURRENT_TIMESTAMP, 'APPROVATO', 'FOTO', 'resources/foto_nino.jpg'),
+(5, CURRENT_TIMESTAMP, 'APPROVATO', 'FOTO', 'resources/foto_checco.jpg');
+
 
 
 
