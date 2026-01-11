@@ -492,3 +492,42 @@ Responses:
 * 400, parametro mancante
 * 401, token non valido
 * 500, errore di database o business logic
+
+
+Endpoint /follow/{id_followed}
+
+POST
+Inizia a seguire un utente.
+
+Headers:
+bearer (string)
+
+QUERIES:
+INSERT INTO SEGUE (id_follower, id_followed, data_inizio) 
+VALUES ($1, $2, CURRENT_DATE);
+
+Responses:
+200, utente seguito con successo
+400, errore (es. tentativo di seguire se stessi o utente già seguito)
+401, token non valido
+404, utente da seguire non trovato
+
+
+DELETE
+Smetti di seguire un utente (Unfollow).
+
+Headers:
+bearer (string)
+
+QUERIES:
+DELETE FROM SEGUE 
+WHERE id_follower = $1 AND id_followed = $2;
+
+Responses:
+200, utente rimosso dai seguiti
+401, token non valido
+404, relazione di follow non esistente
+
+(Il follow è modellato come una relazione binaria tra utenti,
+ gestita tramite inserimento e 
+ cancellazione di tuple nella tabella SEGUE.)
